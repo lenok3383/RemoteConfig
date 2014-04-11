@@ -70,6 +70,12 @@ class RemoteMachine():
     def get_info_from_remote_machine(self,command):
         pass
 
+class TimeoutException(Exception):
+    pass
+
+class WrongPassword(Exception):
+    pass
+
 if __name__ == '__main__':
     main()
 

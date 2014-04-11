@@ -1,9 +1,7 @@
 import unittest
 from shared.testing.vmock.mockcontrol import MockControl
-import fetch_config
 import pexpect
-from fetch_config import RemoteMachine
-
+from fetch_config import RemoteMachine, TimeoutException, WrongPassword
 
 class TestRemoteMachine(unittest.TestCase):
     def test___init__(self):
@@ -17,26 +15,71 @@ class TestRemoteMachine(unittest.TestCase):
         self.mc.tear_down()
 
     def test_good_connection(self):
-        mc = MockControl()
+        my_dict = {'username':'lenok',
+                  'host':'host',
+                  'port':'port',
+                  'password':'123',
+                  'command':'command'}
 
-        spawn_mock = mc.mock_class(pexpect.spawn)
-        spawn_ctor_mock = mc.mock_constructor(pexpect, 'spawn')
+        spawn_mock = self.mc.mock_class(pexpect.spawn)
+        spawn_ctor_mock = self.mc.mock_constructor(pexpect, 'spawn')
 
-        spawn_ctor_mock(1).returns(spawn_mock)
+        spawn_ctor_mock(my_dict).returns(spawn_mock)
 
         spawn_mock.expect(['password:', 'Connection timed out']).returns(0)
         spawn_mock.sendline('123')
-        spawn_mock.expect([':~\$','Permission denied']).returns(0)
-        # spawn_mock.sendline('ifconfig')
+        spawn_mock.expect([':~\$','password']).returns(0)
 
-        mc.replay()
+        self.mc.replay()
 
-        # child = pexpect.spawn('ssh %s %s %s'%( 'lenok', 'host', 'port'))
+        RemoteMachine(my_dict)
 
-        # spawn_mock = pexpect.spawn(1)
-        RemoteMachine({'lenok', 'host', 'port','command'})
-        # test_result =
-        mc.verify()
+        self.mc.verify()
 
-        # my_result = ['result']
-        # self.assertListEqual(test_result,my_result)
+    def test_timeout_connection(self):
+        my_dict = {'username':'lenok',
+                  'host':'host',
+                  'port':'port',
+                  'password':'123',
+                  'command':'command'}
+
+        spawn_mock = self.mc.mock_class(pexpect.spawn)
+        spawn_ctor_mock = self.mc.mock_constructor(pexpect, 'spawn')
+
+        spawn_ctor_mock(my_dict).returns(spawn_mock)
+
+        spawn_mock.expect(['password:', 'Connection timed out']).returns(1)
+
+        self.mc.replay()
+
+        self.assertRaises(TimeoutException, RemoteMachine , my_dict)
+
+        self.mc.verify()
+
+
+    def test_perm_denied_connection(self):
+        test_dict = {'username':'lenok',
+                  'host':'host',
+                  'port':'port',
+                  'password':'password',
+                  'command':'command'}
+
+        spawn_mock = self.mc.mock_class(pexpect.spawn)
+        spawn_ctor_mock = self.mc.mock_constructor(pexpect, 'spawn')
+
+        spawn_ctor_mock(test_dict).returns(spawn_mock)
+
+        spawn_mock.expect(['password:', 'Connection timed out']).returns(0)
+        spawn_mock.sendline('password')
+        spawn_mock.expect([':~\$','password']).returns(1)
+
+        self.mc.replay()
+
+        self.assertRaises(WrongPassword, RemoteMachine, test_dict)
+
+        self.mc.verify()
+
+
+
+
+
