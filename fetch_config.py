@@ -104,7 +104,7 @@ class RemoteMachine():
                 raise WrongPassword('This password is wrong')
         elif expect_options[i] == self.UNKNOWN_PROMPT:
             child.close(True)
-            raise WrongInfo('Name or service not known')
+            raise CannotConnectToMachine('Name or service not known')
         elif expect_options[i] == self.TIMEOUT_PROMPT:
             child.close(True)
             raise TimeoutException('Connection timed out')
@@ -112,7 +112,7 @@ class RemoteMachine():
 
 
     def get_info_from_remote_machine(self,command):
-        
+
         pass
 
 
@@ -123,7 +123,7 @@ class TimeoutException(Exception):
 class WrongPassword(Exception):
     pass
 
-class WrongInfo(Exception):
+class CannotConnectToMachine(Exception):
     pass
 
 if __name__ == '__main__':

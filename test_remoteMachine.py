@@ -1,7 +1,7 @@
 import unittest
 from shared.testing.vmock.mockcontrol import MockControl
 import pexpect
-from fetch_config import RemoteMachine, TimeoutException, WrongPassword, WrongInfo
+from fetch_config import RemoteMachine, TimeoutException, WrongPassword, CannotConnectToMachine
 
 class TestRemoteMachine(unittest.TestCase):
     def test___init__(self):
@@ -20,7 +20,7 @@ class TestRemoteMachine(unittest.TestCase):
         self.mc.tear_down()
 
     def test_good_connection(self):
-        my_dict = {'username':'lenok',
+        test_dict = {'username':'lenok',
                   'host':'host4',
                   'port':'23',
                   'password':'123',
@@ -38,12 +38,12 @@ class TestRemoteMachine(unittest.TestCase):
 
         self.mc.replay()
 
-        RemoteMachine(my_dict)
+        RemoteMachine(test_dict)
 
         self.mc.verify()
 
     def test_timeout_connection(self):
-        info_dict = {'username':'lenok',
+        test_dict = {'username':'lenok',
                   'host':'host4',
                   'port':'23',
                   'password':'123',
@@ -60,7 +60,7 @@ class TestRemoteMachine(unittest.TestCase):
 
         self.mc.replay()
 
-        self.assertRaises(TimeoutException, RemoteMachine , info_dict)
+        self.assertRaises(TimeoutException, RemoteMachine , test_dict)
 
         self.mc.verify()
 
@@ -107,7 +107,7 @@ class TestRemoteMachine(unittest.TestCase):
 
         self.mc.replay()
 
-        self.assertRaises(WrongInfo, RemoteMachine, test_dict)
+        self.assertRaises(CannotConnectToMachine, RemoteMachine, test_dict)
 
         self.mc.verify()
 
