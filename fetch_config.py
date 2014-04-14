@@ -3,6 +3,7 @@ from optparse import OptionParser
 import sys
 import re
 import logging
+import pexpect
 
 def get_info_from_file(path):
     info_list = []
@@ -63,17 +64,66 @@ def main():
     return info_list
 
 class RemoteMachine():
-    def __init__(self, info_dict):
+    info_dict = {
+                    'username': 'lenok',
+                    'host': 'host4',
+                    'port': '23',
+                    'password': '123',
+                    'command': 'ifconfig',
+                }
 
-        pass
+    DEFAULT_SSH_PORT = 22
+    SSH_COMMAND = 'ssh {username}@{host} -p {port}'
+
+    SHELL_PROMPT = r':~\$'
+    PASSWORD_PROMPT = r'password:'
+    TIMEOUT_PROMPT = r'Connection timed out'
+    UNKNOWN_PROMPT = r'Name or service not known'
+
+    def __init__(self, info_dict):
+        for key in ('username', 'host', 'password'):
+            if not key in info_dict:
+                raise ValueError('There isn\'t some key of info')
+
+        if not 'port' in info_dict:
+            info_dict['port'] = self.DEFAULT_SSH_PORT
+
+        ssh_command = self.SSH_COMMAND.format(**info_dict)
+
+        child = pexpect.spawn(ssh_command)
+        expect_options = [self.PASSWORD_PROMPT, self.UNKNOWN_PROMPT, self.TIMEOUT_PROMPT ,
+                          self.SHELL_PROMPT]
+        pass_option = [self.SHELL_PROMPT, self.PASSWORD_PROMPT]
+
+        i = child.expect(expect_options)
+        if expect_options[i] == self.PASSWORD_PROMPT:
+            child.sendline(info_dict['password'])
+            p = child.expect(pass_option)
+            if pass_option[p] == self.PASSWORD_PROMPT:
+                child.close(True)
+                raise WrongPassword('This password is wrong')
+        elif expect_options[i] == self.UNKNOWN_PROMPT:
+            child.close(True)
+            raise WrongInfo('Name or service not known')
+        elif expect_options[i] == self.TIMEOUT_PROMPT:
+            child.close(True)
+            raise TimeoutException('Connection timed out')
+
+
 
     def get_info_from_remote_machine(self,command):
+        
         pass
+
+
 
 class TimeoutException(Exception):
     pass
 
 class WrongPassword(Exception):
+    pass
+
+class WrongInfo(Exception):
     pass
 
 if __name__ == '__main__':
