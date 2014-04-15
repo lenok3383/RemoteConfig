@@ -4,6 +4,7 @@ import sys
 import re
 import logging
 import pexpect
+import threading
 
 def get_info_from_file(path):
     info_list = []
@@ -81,6 +82,9 @@ class RemoteMachine():
     UNKNOWN_PROMPT = r'Name or service not known'
 
     def __init__(self, info_dict):
+        self.child = self.establish_connection(info_dict)
+
+    def establish_connection(self, info_dict):
         for key in ('username', 'host', 'password'):
             if not key in info_dict:
                 raise ValueError('There isn\'t some key of info')
@@ -108,12 +112,17 @@ class RemoteMachine():
         elif expect_options[i] == self.TIMEOUT_PROMPT:
             child.close(True)
             raise TimeoutException('Connection timed out')
+        return child
 
+    def get_info_from_remote_machine(self, command):
+        command = 'ifconfig'
+        if not self.child.isalive():
+            raise TerminationConnection('Connection failed')
+        self.child.sendline(command)
+        result = self.child.readlines()
+        self.child.close(True)
+        return result
 
-
-    def get_info_from_remote_machine(self,command):
-
-        pass
 
 
 
@@ -124,6 +133,9 @@ class WrongPassword(Exception):
     pass
 
 class CannotConnectToMachine(Exception):
+    pass
+
+class TerminationConnection(Exception):
     pass
 
 if __name__ == '__main__':
