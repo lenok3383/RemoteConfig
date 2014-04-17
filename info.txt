@@ -1,0 +1,5 @@
+lenok@localhost 123 ifconfig
+lenok@localhost 123 
+lenok@localhost df
+lenok@localhost 123 vmstat
+lenok@localhost 123 free
