@@ -5,38 +5,42 @@ import re
 import logging
 import pexpect
 import threading
+import getpass
+
 
 def get_info_from_file(path):
     info_list = []
     data_dict = {}
-    # for file in path:
     with open(path, 'r') as file:
         for line in file:
-            new_line = re.search(r'(?P<user>[A-z\d]+)@(?P<host>[A-z\d]+)(:(?P<port>\d*))? (?P<password>[A-z\d]+) (?P<command>[A-z]*)', line)
+            new_line = re.search(
+                r'(?P<user>[A-z\d]+)@(?P<host>[A-z\d]+)(:(?P<port>\d*))? (?P<password>[A-z\d]+) (?P<command>[A-z]*)',
+                line)
             if not new_line:
                 logging.error('Problem: Check input info in line:%s', line)
                 continue
             data_dict = {
-                    'username': new_line.group('user'),
-                    'host': new_line.group('host'),
-                    'password': new_line.group('password'),
-                    'command': new_line.group('command'),
-                }
+                'username': new_line.group('user'),
+                'host': new_line.group('host'),
+                'password': new_line.group('password'),
+                'command': new_line.group('command'),
+            }
             if new_line.group('port'):
                 data_dict['port'] = new_line.group('port')
-    info_list.append(data_dict)
+            info_list.append(data_dict)
     return info_list
+
 
 def main():
     info_list = []
     info_dict = {}
     parser = OptionParser()
-    parser.add_option("-h", "--host", dest="host", )
-    parser.add_option("-u", "--username", dest="username", )
-    parser.add_option("-po", "--port", dest="port", )
-    parser.add_option("-c", "--command", dest="command", )
-    parser.add_option("-pas", "--pass", type="string", dest="password")
-    parser.add_option("-p", "--path", type="string", dest="path")
+    parser.add_option("--host", dest="host")
+    parser.add_option("-u", "--username", type="string", dest="username")
+    parser.add_option("--port", dest="port")
+    parser.add_option("-c", "--command", dest="command")
+    # parser.add_option("-p", "--pass", type="string", dest="password")
+    parser.add_option("--path", type="string", dest="path")
     (options, args) = parser.parse_args(sys.argv)
     if options.path:
         info_list = get_info_from_file(options.path)
@@ -50,32 +54,32 @@ def main():
         if not options.command:
             print "Enter command"
             return
-        if not options.password:
-            print "Enter password"
-            return
+        password = getpass.getpass()
         info_dict = {
-            'username':options.username,
+            'username': options.username,
             'host': options.host,
-            'password': options.password,
+            'password': password,
             'command': options.command,
         }
         if options.port:
             info_dict['port'] = options.port
         info_list.append(info_dict)
-    return info_list
+    result_list = []
+    threads = []
+    for items in info_list:
+        thread = RemoteCommandThread(items)
+        thread.start()
+        threads.append(thread)
+    for thread in threads:
+        thread.join()
+        result_list.append(thread.get_result_value())
+    for items in (result_list):
+        print "Command output:", items
+
 
 class RemoteMachine():
-    info_dict = {
-                    'username': 'lenok',
-                    'host': 'host4',
-                    'port': '23',
-                    'password': '123',
-                    'command': 'ifconfig',
-                }
-
     DEFAULT_SSH_PORT = 22
     SSH_COMMAND = 'ssh {username}@{host} -p {port}'
-
     SHELL_PROMPT = r':~\$'
     PASSWORD_PROMPT = r'password:'
     TIMEOUT_PROMPT = r'Connection timed out'
@@ -95,7 +99,7 @@ class RemoteMachine():
         ssh_command = self.SSH_COMMAND.format(**info_dict)
 
         child = pexpect.spawn(ssh_command)
-        expect_options = [self.PASSWORD_PROMPT, self.UNKNOWN_PROMPT, self.TIMEOUT_PROMPT ,
+        expect_options = [self.PASSWORD_PROMPT, self.UNKNOWN_PROMPT, self.TIMEOUT_PROMPT,
                           self.SHELL_PROMPT]
         pass_option = [self.SHELL_PROMPT, self.PASSWORD_PROMPT]
 
@@ -115,28 +119,48 @@ class RemoteMachine():
         return child
 
     def get_info_from_remote_machine(self, command):
-        command = 'ifconfig'
         if not self.child.isalive():
             raise TerminationConnection('Connection failed')
         self.child.sendline(command)
-        result = self.child.readlines()
+        self.child.expect(self.SHELL_PROMPT)
+        result = self.get_child_before()
         self.child.close(True)
         return result
 
+    def get_child_before(self):
+        return self.child.before
 
+
+class RemoteCommandThread(threading.Thread):
+    def __init__(self, info_dict):
+        super(RemoteCommandThread, self).__init__()
+        self.info_dict = info_dict
+        self.command = self.info_dict['command']
+        self.result = ""
+
+    def run(self):
+        connection = RemoteMachine(self.info_dict)
+        self.result = connection.get_info_from_remote_machine(self.command)
+
+    def get_result_value(self):
+        return self.result
 
 
 class TimeoutException(Exception):
     pass
 
+
 class WrongPassword(Exception):
     pass
+
 
 class CannotConnectToMachine(Exception):
     pass
 
+
 class TerminationConnection(Exception):
     pass
+
 
 if __name__ == '__main__':
     main()

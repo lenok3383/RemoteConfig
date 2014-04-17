@@ -124,11 +124,12 @@ class TestRemoteMachine(TestCase):
 
         spawn_mock = self.mc.mock_class(pexpect.spawn)
         mock_establish_connection = self.mc.mock_method(RemoteMachine, 'establish_connection')
-
         mock_establish_connection(test_dict).returns(spawn_mock)
+        mock_get_child_before = self.mc.mock_method(RemoteMachine, 'get_child_before')
+
         spawn_mock.isalive().returns(True)
         spawn_mock.sendline(test_command)
-        spawn_mock.readlines()
+        mock_get_child_before().returns('some text')
         spawn_mock.close(True)
 
         self.mc.replay()
@@ -138,7 +139,7 @@ class TestRemoteMachine(TestCase):
 
         self.mc.verify()
 
-        self.assertEquals(result, None)
+        self.assertEquals(result, 'some text')
 
     def test_get_info_from_remote_machine_termination_connection(self):
         test_command = 'ifconfig'
