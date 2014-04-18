@@ -61,7 +61,6 @@ def main():
             'command': options.command,
         }
         if options.port:
-            info_dict['port'] = options.portrem
             info_dict['port'] = options.port
         info_list.append(info_dict)
     result_list = []
