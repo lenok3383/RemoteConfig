@@ -62,7 +62,11 @@ def main():
             'command': options.command,
         }
         if options.port:
+<<<<<<< HEAD
             info_dict['port'] = options.portrem
+=======
+            info_dict['port'] = options.port
+>>>>>>> e2fcb0d3796a78517029fc1ab4463493df53bef9
         info_list.append(info_dict)
     result_list = []
     threads = []
