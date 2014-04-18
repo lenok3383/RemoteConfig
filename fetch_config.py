@@ -39,7 +39,6 @@ def main():
     parser.add_option("-u", "--username", type="string", dest="username")
     parser.add_option("--port", dest="port")
     parser.add_option("-c", "--command", dest="command")
-    # parser.add_option("-p", "--pass", type="string", dest="password")
     parser.add_option("--path", type="string", dest="path")
     (options, args) = parser.parse_args(sys.argv)
     if options.path:
@@ -62,11 +61,8 @@ def main():
             'command': options.command,
         }
         if options.port:
-<<<<<<< HEAD
             info_dict['port'] = options.portrem
-=======
             info_dict['port'] = options.port
->>>>>>> e2fcb0d3796a78517029fc1ab4463493df53bef9
         info_list.append(info_dict)
     result_list = []
     threads = []

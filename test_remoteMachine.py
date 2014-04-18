@@ -38,7 +38,6 @@ class TestRemoteMachine(TestCase):
         spawn_mock.sendline('123')
         spawn_mock.expect([self.SHELL_PROMPT, self.PASSWORD_PROMPT]).returns(0)
 
-
         self.mc.replay()
 
         result =  RemoteMachine(test_dict)
