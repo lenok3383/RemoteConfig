@@ -35,11 +35,11 @@ def main():
     info_list = []
     info_dict = {}
     parser = OptionParser()
-    parser.add_option("--host", help="write host", dest="host")
-    parser.add_option("-u", "--username", help="write username", type="string", dest="username")
-    parser.add_option("--port", help="write port", dest="port")
-    parser.add_option("-c", "--command", help="write command", dest="command")
-    parser.add_option("--path", help="write path to file", dest="path", type="string")
+    parser.add_option("--host", help="host", dest="host")
+    parser.add_option("-u", "--username", help="username", type="string", dest="username")
+    parser.add_option("--port", help="port", dest="port")
+    parser.add_option("-c", "--command", help="command", dest="command")
+    parser.add_option("--path", help="path to file", dest="path", type="string")
     (options, args) = parser.parse_args(sys.argv)
     if options.path:
         info_list = get_info_from_file(options.path)
